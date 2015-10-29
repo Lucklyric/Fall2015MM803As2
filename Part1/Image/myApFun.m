@@ -2,14 +2,24 @@ function [ C ] = myApFun( A,B )
 %MYAPFUN Summary of this function goes here
 %   Detailed explanation goes here
 C=A;
-D = logical(triu(ones(500,752)));
+ImgSize = size(A);
+D = logical(triu(ones(ImgSize(1),ImgSize(2))));
 for i=1:3
-MatA = A(:,:,i); MatB=B(:,:,i);
+MatA = A(:,:,i); MatB = B(:,:,i);
 MaxD = abs(MatA) >= abs(MatB);
-MaxC = MatA*MaxD+MatB*~MaxD;
+CMax = MatA;
+CMax(MaxD) = MatA(MaxD);
+CMax(~MaxD) = MatB(~MaxD);
+
 MinD = abs(MatA) <= abs(MatB);
-MinC = MatA*MinD+MatB*~MinD;
-C(:,:,i) = MaxC*D+MinC*D;
+CMin = MatA;
+CMin(MinD) = MatA(MinD);
+CMin(~MinD) = MatB(~MinD);
+
+CMix = MatA;
+CMix(D) = CMin(D);
+CMix(~D) = CMax(~D);
+C(:,:,i) = CMix;
 end
 end
 
