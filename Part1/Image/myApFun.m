@@ -1,32 +1,38 @@
 function [ C ] = myApFun( A,B )
 %MYAPFUN Summary of this function goes here
-%   Detailed explanation goes here
 C = A;
-ImgSize = size(A);
-D = logical(triu(ones(ImgSize(1),ImgSize(2))));
-level1 = graythresh(uint8(A));
-level2 = graythresh(uint8(B));
+
+%Translate rgb to hsv 
+hsvA = rgb2hsv(A);
+hsvB = rgb2hsv(B);
+
+%Get the height and width
+[h,w,~] = size(A);
+
+%using graythresh function to find the level for A and B based on their
+%brightness
+level1 = graythresh(uint8(hsvA(:,:,3)));
+level2 = graythresh(uint8(hsvB(:,:,3)));
+
+%Segment the A & B and create a mask
 segA = im2bw(uint8(A),level1);
 segB = im2bw(uint8(B),level2);
 segD = segA & segB; 
-figure(),imshow(segD);
+
+%Gaussion filter for the binary mask to get a weight matrix
+DsegD = double(segD);
+GsedD = imgaussfilt(DsegD,7);
+
+%Linear combination between the the two source images according to the
+%correspoing weight
+figure(),imshow(GsedD);
 double(A);double(B);
-for i=1:3
-MatA = A(:,:,i); MatB = B(:,:,i);
-MaxD = abs(MatA) >= abs(MatB);
-CMax = MatA;
-CMax(MaxD) = MatA(MaxD);
-CMax(~MaxD) = MatB(~MaxD);
-
-MinD = abs(MatA) <= abs(MatB);
-CMin = MatA;
-CMin(MinD) = MatA(MinD);
-CMin(~MinD) = MatB(~MinD);
-
-CMix = MatA;
-CMix(segD) = MatA(segD).*0.9 + MatB(segD).*0.1;
-CMix(~segD) = MatA(~segD).*0.9 + MatB(~segD).*0.1;
-C(:,:,i) = CMix;
-end
+for i=1:h
+    for j = 1:w
+        for k =1:3
+            %Save to the final outputs
+            C(i,j,k) = A(i,j,k)*GsedD(i,j) + B(i,j,k)*(1-GsedD(i,j));
+        end
+    end
 end
 
