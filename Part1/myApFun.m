@@ -23,9 +23,13 @@ segD = segA & segB;
 DsegD = double(segD);
 GsedD = imgaussfilt(DsegD,7);
 
+%Show the mask and weight matrix
+figure();
+subplot(1,2,1),imshow(segD),axis image,title('Mask');
+subplot(1,2,2),imshow(GsedD),axis image,title('Weight Matrix');
+
 %Linear combination between the the two source images according to the
 %correspoing weight
-figure(),imshow(GsedD);
 double(A);double(B);
 for i=1:h
     for j = 1:w

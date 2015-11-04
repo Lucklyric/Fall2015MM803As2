@@ -1,50 +1,52 @@
 close; clear;
-%load noisy image
+%Load noisy image
 I = imread('noisy_image.jpg');
 
+%Get the size of the image
 [h,w] = size(I);
-
 DI = double(I);
 IDFT = fft2(DI);
-subplot(1,3,1),imagesc(DI),colormap(gray),axis image,title('Denoising image');
 
-%load original image
+
+%Goad original image
 J = imread('cameraman.tif');
 DJ = double(J);
 JDFT = fft2(DJ);
 
-Mask = IDFT-JDFT;
+%Show the Fourier specturm of original and noised images
+figure(),
+subplot(1,2,1),imagesc(fftshift(log2(abs(JDFT)+1))),colormap(gray),axis image,title('Original Image');
+subplot(1,2,2),imagesc(fftshift(log2(abs(IDFT)+1))),colormap(gray),axis image,title('Noised Image');
 
-MDFT = fft2(Mask);
+%Get the Diff matrix and extract the value that exceed the 0.65 of max
+%value
+Diff = (fftshift(log2(abs(IDFT)+1))-fftshift(log2(abs(JDFT)+1)));
+Cel = (max(Diff(:))*0.65);
+Diff = Diff>Cel;
+Mask = ones(h,w);
+[a,b] = ind2sub(size(Mask),(find(Diff)));
 
-Gap = (fftshift(log2(abs(IDFT)+1))-fftshift(log2(abs(JDFT)+1)));
-Cel = (max(Gap(:))*0.65);
-Gap = Gap>Cel;
-MaskL = ones(h,w);
-[a,b] = ind2sub(size(MaskL),(find(Gap)));
-MaskL(a(13),b(13)) = 0;
-MaskL(a(16),b(16)) = 0;
-MaskL(a(19),b(19)) = 0;
-MaskL(a(22),b(22)) = 0;
-% MaskL(a(16),b(16)) = 0;
-%  for i=20:21
-%      for j=20:21
+%Manually test part to extract the exact frequence of the noise
+%  idx = 1;  %set from 1 to length of a to see if the noise has been
+%  removed
+%  for i=idx:34
+%      for j=idx:34
 %          MaskL(a(i),b(j)) = 0;
 %      end
 %  end
 
-% for i=1:length(a)
-%     for j=1:length(b)
-%         dist=sqrt((i-round(h/2))^2 + (j-round(w/2))^2);
-%         if(dist > 0.2*w) 
-%             MaskL(a(i),b(j)) = 0;
-%         end
-%     end
-% end
+%After the manually test I get the exactlly nosie entry of the noise
+%frequence and let them to 0 in the Maks matrix
+Mask(a(13),b(13)) = 0;
+Mask(a(16),b(16)) = 0;
+Mask(a(19),b(19)) = 0;
+Mask(a(22),b(22)) = 0;
 
-
-
-H = ifft2(IDFT.*(fftshift(MaskL)));
+%ffshit with the final Mask to the noised FT
+H = ifft2(IDFT.*(fftshift(Mask)));
 HI = real(H);
-subplot(1,3,2),imagesc(HI),colormap(gray),axis image,title('Orignial image');
-subplot(1,3,3),imagesc((fftshift(log2(abs(IDFT)+1)))),colormap(gray),axis image,title('Orignial image');
+
+%Show the final result
+figure(),
+subplot(1,2,1),imagesc(DI),colormap(gray),axis image,title('Noised image');
+subplot(1,2,2),imagesc(HI),colormap(gray),axis image,title('My Denoising Image');
